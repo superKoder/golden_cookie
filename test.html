@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Cookie clicker - Verification Environment</title>
+    <!-- Modern Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0d19;
+            --primary: #ffd700;
+            --primary-glow: rgba(255, 215, 0, 0.4);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.3);
+            --card-bg: rgba(20, 24, 46, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Ambient background canvas */
+        #background-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphic Control Panel */
+        .dashboard {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 380px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            z-index: 10;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dashboard:hover {
+            border-color: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 20px 45px rgba(255, 215, 0, 0.05),
+                        0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 14px var(--primary); }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        .progress-section {
+            margin-bottom: 24px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--success) 100%);
+            box-shadow: 0 0 10px var(--primary-glow);
+            border-radius: 99px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Event Console */
+        .console-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            color: #d1d5db;
+        }
+
+        .console-line {
+            display: flex;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .console-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .console-msg {
+            word-break: break-all;
+        }
+
+        .console-msg.success {
+            color: var(--success);
+        }
+
+        /* Target Golden Cookie */
+        #target-cookie {
+            position: absolute;
+            z-index: 5;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-drag: none;
+            transition: opacity 0.2s;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+            /* Initially hidden off-screen until placement */
+            top: -9999px;
+            left: -9999px;
+        }
+
+        #target-cookie.clicked {
+            animation: shrink-explode 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes shrink-explode {
+            0% { transform: scale(var(--curr-scale)) rotate(0deg); }
+            30% { transform: scale(calc(var(--curr-scale) * 0.7)) rotate(-10deg); }
+            100% { transform: scale(var(--curr-scale)) rotate(10deg); }
+        }
+
+        /* Celebration Screen overlay */
+        .success-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 13, 25, 0.9);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-card {
+            text-align: center;
+            background: rgba(20, 24, 46, 0.8);
+            border: 2px solid var(--success);
+            box-shadow: 0 0 50px var(--success-glow);
+            padding: 48px;
+            border-radius: 28px;
+            max-width: 480px;
+            transform: scale(0.9);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .success-overlay.show .success-card {
+            transform: scale(1);
+        }
+
+        .success-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--success);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 24px;
+            box-shadow: 0 0 20px var(--success);
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .success-text {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, #d4af37 100%);
+            color: #0b0d19;
+            border: none;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px var(--primary-glow);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic canvas painting 'random stuff' -->
+    <canvas id="background-canvas"></canvas>
+
+    <!-- Control Dashboard -->
+    <div class="dashboard">
+        <h1><span>🍪</span> verification</h1>
+        <div class="subtitle">Golden Cookie Clicker Integration Test Environment. Checks click accuracy across scale dimensions.</div>
+        
+        <div class="status-badge" id="status-badge">
+            <span class="status-dot"></span>
+            <span id="status-text">DETECTING CLICKER...</span>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>Progress</span>
+                <span id="progress-text">0 / 5 clicks</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="console-container" id="console">
+            <div class="console-line">
+                <span class="console-time">[12:59:00]</span>
+                <span class="console-msg">System initialized. Waiting for Rust clicker...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- The target cookie image -->
+    <img id="target-cookie" src="data:image/png;base64,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" alt="Golden Cookie" />
+
+    <!-- Success Ceremony overlay -->
+    <div class="success-overlay" id="success-overlay">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <div class="success-title">Verification Passed!</div>
+            <div class="success-text">
+                The Golden Cookie Clicker successfully executed 5 consecutive, multi-scale template detections and automated clicks in under 10 seconds.
+            </div>
+            <button class="btn" onclick="resetTest()">Run Test Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        const cookie = document.getElementById('target-cookie');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const consoleEl = document.getElementById('console');
+        const successOverlay = document.getElementById('success-overlay');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = document.getElementById('status-text');
+
+        let clickCount = 0;
+        const targetClicks = 5;
+        const testScales = [0.6, 0.8, 1.0, 1.2, 1.4];
+        let currentScale = 1.0;
+
+        // Initialize Audio Context for synthesized bells
+        let audioCtx;
+        function playChime(freq = 587.33, duration = 0.4) { // D5 note
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            // Quick bell-like decay envelope
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Add line to GUI console
+        function logMessage(msg, type = '') {
+            const now = new Date();
+            const timeStr = `[${now.toTimeString().split(' ')[0]}]`;
+            
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            
+            const timeEl = document.createElement('span');
+            timeEl.className = 'console-time';
+            timeEl.textContent = timeStr;
+            
+            const msgEl = document.createElement('span');
+            msgEl.className = 'console-msg' + (type ? ' ' + type : '');
+            msgEl.textContent = msg;
+            
+            line.appendChild(timeEl);
+            line.appendChild(msgEl);
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // Resize Canvas to fit screen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            paintRandomNoise();
+        }
+
+        // Paint 'random stuff' (noisy shapes) on screen to test detector ZNCC robustness
+        function paintRandomNoise() {
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // Background fill
+            ctx.fillStyle = '#0b0d19';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < w; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 0; y < h; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // Draw 50+ random geometric shapes
+            const shapes = 60;
+            const colors = [
+                'rgba(59, 130, 246, 0.15)',  // blue
+                'rgba(16, 185, 129, 0.15)',  // green
+                'rgba(239, 68, 68, 0.12)',   // red
+                'rgba(245, 158, 11, 0.12)',  // amber
+                'rgba(139, 92, 246, 0.15)',  // purple
+                'rgba(236, 72, 153, 0.15)',  // pink
+                'rgba(6, 182, 212, 0.15)'    // cyan
+            ];
+
+            for (let i = 0; i < shapes; i++) {
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                ctx.strokeStyle = ctx.fillStyle;
+                
+                const type = Math.floor(Math.random() * 4);
+                const rx = Math.random() * w;
+                const ry = Math.random() * h;
+
+                ctx.beginPath();
+                if (type === 0) {
+                    // Rectangles
+                    const rw = 20 + Math.random() * 150;
+                    const rh = 20 + Math.random() * 150;
+                    ctx.fillRect(rx, ry, rw, rh);
+                } else if (type === 1) {
+                    // Circles
+                    const rad = 10 + Math.random() * 80;
+                    ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (type === 2) {
+                    // Text blocks to simulate webpage elements
+                    ctx.font = `${Math.floor(12 + Math.random() * 32)}px sans-serif`;
+                    ctx.fillText("Cookie Clicker Fake text 1234567890", rx, ry);
+                } else {
+                    // Triangles/lines
+                    ctx.lineWidth = 1 + Math.random() * 3;
+                    ctx.moveTo(rx, ry);
+                    ctx.lineTo(rx + (Math.random() * 200 - 100), ry + (Math.random() * 200 - 100));
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Reposition cookie randomly on screen
+        function repositionCookie() {
+            if (clickCount >= targetClicks) {
+                // Done! Don't reposition anymore. Show success ceremony
+                cookie.style.display = 'none';
+                triggerSuccess();
+                return;
+            }
+
+            // Select a random scale from scales scanned by Rust
+            currentScale = testScales[Math.floor(Math.random() * testScales.length)];
+            
+            // Adjust CSS scale by window.devicePixelRatio so physical size matches scanned scale
+            const dpr = window.devicePixelRatio || 1.0;
+            const cssScale = currentScale / dpr;
+            
+            // Update custom property for rotation/shrink animation
+            document.documentElement.style.setProperty('--curr-scale', cssScale);
+            cookie.style.transform = `scale(${cssScale})`;
+
+            // Get target dimensions based on natural size
+            const natW = cookie.naturalWidth || 96;
+            const natH = cookie.naturalHeight || 96;
+            
+            const scaledW = natW * currentScale;
+            const scaledH = natH * currentScale;
+
+            // Safe bounds for positioning (avoiding getting clipped out of viewport)
+            // Also avoid putting it directly under the dashboard card (top-left 450x450px area)
+            let validPosition = false;
+            let finalX = 0;
+            let finalY = 0;
+
+            while (!validPosition) {
+                finalX = Math.random() * (window.innerWidth - scaledW);
+                finalY = Math.random() * (window.innerHeight - scaledH);
+
+                // Check if it overlaps with dashboard card (top 0 to 450, left 0 to 450)
+                if (finalX > 450 || finalY > 450) {
+                    validPosition = true;
+                }
+            }
+
+            // Set positions
+            cookie.style.left = `${finalX}px`;
+            cookie.style.top = `${finalY}px`;
+            
+            // Add a clean visual ripple around cookie positioning
+            logMessage(`Placed cookie at (${Math.round(finalX)}, ${Math.round(finalY)}) with scale ${currentScale}x`);
+            
+            // Force redraw of noisy background
+            paintRandomNoise();
+        }
+
+        // Handle clicks on cookie
+        function handleCookieClick(e) {
+            // Trigger visual feedback classes
+            cookie.classList.remove('clicked');
+            void cookie.offsetWidth; // Force reflow
+            cookie.classList.add('clicked');
+
+            clickCount++;
+            
+            // Update progress bar
+            const percent = (clickCount / targetClicks) * 100;
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `${clickCount} / ${targetClicks} clicks`;
+
+            // Synthesize click sound
+            // Increase frequency for successive clicks
+            const baseFreq = 523.25; // C5
+            const nextFreq = baseFreq * Math.pow(1.059463, clickCount * 2); // musical semitone step
+            playChime(nextFreq, 0.4);
+
+            logMessage(`✓ Click #${clickCount} registered at (${Math.round(e.clientX)}, ${Math.round(e.clientY)})`, 'success');
+
+            // Move to next position
+            setTimeout(repositionCookie, 300);
+        }
+
+        function triggerSuccess() {
+            successOverlay.classList.add('show');
+            statusBadge.style.borderColor = 'var(--success)';
+            statusText.textContent = 'VERIFICATION SUCCESSFUL';
+            statusText.style.color = 'var(--success)';
+            document.querySelector('.status-dot').style.backgroundColor = 'var(--success)';
+            document.querySelector('.status-dot').style.boxShadow = '0 0 10px var(--success)';
+            
+            playChime(880.0, 0.2); // A5
+            setTimeout(() => playChime(1318.51, 0.6), 150); // E6
+            logMessage("🎉 Integration Verification passed successfully!", "success");
+        }
+
+        function resetTest() {
+            clickCount = 0;
+            progressBar.style.width = '0%';
+            progressText.textContent = `0 / ${targetClicks} clicks`;
+            successOverlay.classList.remove('show');
+            
+            statusBadge.style.borderColor = 'var(--border-color)';
+            statusText.textContent = 'DETECTING CLICKER...';
+            statusText.style.color = '';
+            document.querySelector('.status-dot').style.backgroundColor = 'var(--primary)';
+            document.querySelector('.status-dot').style.boxShadow = '0 0 10px var(--primary)';
+            
+            cookie.style.display = 'block';
+            
+            logMessage("Test reset. Waiting for clicks...");
+            repositionCookie();
+        }
+
+        // Listen for standard click events
+        cookie.addEventListener('click', handleCookieClick);
+
+        // Resize handler
+        window.addEventListener('resize', resizeCanvas);
+
+        // Initialize position on image load
+        cookie.addEventListener('load', () => {
+            repositionCookie();
+        });
+
+        // Safe fallback in case image load event is cached/skipped
+        if (cookie.complete) {
+            setTimeout(repositionCookie, 100);
+        }
+
+        window.onload = () => {
+            resizeCanvas();
+            logMessage("Verification UI loaded.");
+        };
+    </script>
+</body>
+</html>

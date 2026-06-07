@@ -1,0 +1,11 @@
+[package]
+name = "golden_cookie"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+xcap = "0.3.1"
+enigo = { version = "0.2", features = [] }
+image = "0.25"
+
+
